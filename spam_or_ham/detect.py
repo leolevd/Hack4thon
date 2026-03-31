@@ -87,7 +87,7 @@ def collection_filter(string: str, ham_pic: dict = correct_ham_dict, spam_pic: d
 def susWords_filter(sentence: str):
     return "SPAM" if any([w in zero_width_cleaner(sentence.lower()) for w in [
         "won", "$", "@", "http", "+", "claim", "free", "click",
-        "dollar", ".com", ".xyz", ".io", ".ly"
+        "dollar", ".com", ".xyz", ".io", ".ly", "call", "prize", "offer", "urgent", "limited", "exclusive", "congratulations", "winner", "cash", "bonus", "deal", "discount", "cheap", "guarantee", "risk-free", "act now", "don't miss"
     ]]) else "HAM"
 
 
@@ -132,7 +132,7 @@ def spam_filter(*args, verbose: bool = False, boolean: bool = False):
             print("Zero-width filter: " + ("HAM" if result4 <= 0 else "SPAM") + " Score: " + str(result4))
             print("--------------------------------")
             print("Total score: " + str(sum([result1, result2, result3, result4])) + "\n( Positive / 0 is SPAM, negative is HAM )")
-             
+
         if boolean:
             return True if sum([result1, result2, result3, result4]) >= 0 else False
         return "SPAM" if sum([result1, result2, result3, result4]) >= 0 else "HAM"
