@@ -64,7 +64,7 @@ correct_spam_dict = {k: round(v) for k, v in spam_dict.items() if v > 1}
 
 
 # Compares words in text with ham/spam dictionaries and gives weighted points
-def collection_filter(string: str, ham_pic: dict, spam_pic: dict):
+def collection_filter(string: str, ham_pic: dict = correct_ham_dict, spam_pic: dict = correct_spam_dict):
     counts = Counter.count_words(zero_width_cleaner(string.lower()))
     SPAM_POINTS = 0
     HAM_POINTS = 0
@@ -113,23 +113,39 @@ def zero_width_analyser(s: str):
 
 
 # Main spam filter combining all detection methods
-def spam_filter(*args):
-    result1 = 1 if (collection_filter(args[0], args[1], args[2]) == "SPAM") else -1
-    result2 = 0.5 if (susWords_filter(args[0]) == "SPAM") else -0.5
-    result3 = 0.5 if (CAPS_check(args[0]) == "SPAM") else -0.5
-    result4 = 1 if (zero_width_analyser(args[0]) == "SPAM") else 0
-    # If the total suspicion score is positive, mark as spam
-    return "SPAM" if sum([result1, result2, result3, result4]) >= 0 else "HAM"
+def spam_filter(*args, verbose: bool = False, boolean: bool = False):
+    try:
+        a1, a2 = args[1], args[2]
+    except IndexError:
+        result1 = 1 if (collection_filter(args[0]) == "SPAM") else -1
+    else:
+        result1 = 1 if (collection_filter(args[0], args[1], args[2]) == "SPAM") else -1
+    finally:
+        result2 = 0.5 if (susWords_filter(args[0]) == "SPAM") else -0.5
+        result3 = 0.5 if (CAPS_check(args[0]) == "SPAM") else -0.5
+        result4 = 1 if (zero_width_analyser(args[0]) == "SPAM") else 0
+        # If the total suspicion score is positive, mark as spam
+        if verbose:
+            print("Collection filter: " + ("HAM" if result1 <= 0 else "SPAM") + " Score: " + str(result1))
+            print("Suspicious words filter: " + ("HAM" if result2 <= 0 else "SPAM") + " Score: " + str(result2))
+            print("CAPS filter: " + ("HAM" if result3 <= 0 else "SPAM") + " Score: " + str(result3))
+            print("Zero-width filter: " + ("HAM" if result4 <= 0 else "SPAM") + " Score: " + str(result4))
+            print("--------------------------------")
+            print("Total score: " + str(sum([result1, result2, result3, result4])) + "\n( Positive / 0 is SPAM, negative is HAM )")
+             
+        if boolean:
+            return True if sum([result1, result2, result3, result4]) >= 0 else False
+        return "SPAM" if sum([result1, result2, result3, result4]) >= 0 else "HAM"
 
 
 # Basic tests to verify filter behavior
 try:
-    assert spam_filter("You won a free car!", ham_dict, spam_dict) == "SPAM"
-    assert spam_filter("You won 20 million dollars! Call 8743 to claim!", ham_dict, spam_dict) == "SPAM"
-    assert spam_filter("You won a car! Call us: +74 5389 45983", ham_dict, spam_dict) == "SPAM"
-    assert spam_filter("Hi! How are you?", ham_dict, spam_dict) == "HAM"
-    assert spam_filter("Bro, let's go out at noon", ham_dict, spam_dict) == "HAM"
-    assert spam_filter("mb better tomorrow?", ham_dict, spam_dict) == "HAM"
-    assert spam_filter("Hello Marjung. Your visa application was sucsessfully submited", ham_dict, spam_dict) == "HAM"
+    assert spam_filter("You won a free car!") == "SPAM"
+    assert spam_filter("You won 20 million dollars! Call 8743 to claim!") == "SPAM"
+    assert spam_filter("You won a car! Call us: +74 5389 45983") == "SPAM"
+    assert spam_filter("Hi! How are you?") == "HAM"
+    assert spam_filter("Bro, let's go out at noon") == "HAM"
+    assert spam_filter("mb better tomorrow?") == "HAM"
+    assert spam_filter("Hello Marjung. Your visa application was sucsessfully submited") == "HAM"
 except AssertionError:
     raise ValueError("Tests failed")
